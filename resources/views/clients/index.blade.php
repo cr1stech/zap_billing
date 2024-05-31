@@ -69,7 +69,7 @@
                     {data: 'id', name: 'id'},
                     {data: 'name', name: 'name'},
                     {data: 'phone_number', name: 'phone_number'},
-                    {data: 'status', name: 'status'},
+                    {data: 'total_account_value', name: 'total_account_value'},
                     {data: 'action', name: 'action', orderable: false, searchable: false},
                 ],
                 language: {

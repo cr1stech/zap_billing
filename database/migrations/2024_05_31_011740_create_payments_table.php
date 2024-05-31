@@ -13,12 +13,13 @@ return new class extends Migration
     {
         Schema::create('payments', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('client_account_id');
+            $table->unsignedBigInteger('client_id');
+            $table->json('affected_accounts');
             $table->decimal('amount', 10, 0);
             $table->date('payment_date');
             $table->timestamps();
 
-            $table->foreign('client_account_id')->references('id')->on('client_accounts');
+            $table->foreign('client_id')->references('id')->on('clients')->onDelete('cascade');
         });
     }
 

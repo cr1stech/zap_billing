@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Client;
+use App\Models\Payment;
 use Illuminate\Http\Request;
 
 class ClientController extends Controller
@@ -14,19 +15,25 @@ class ClientController extends Controller
 
     public function datatables()
     {
-        $clients = Client::all();
+        $clients = Client::with('accounts')->get();
+
         return datatables()->of($clients)
             ->addIndexColumn()
+            ->addColumn('total_account_value', function ($client) {
+                $totalAmount = $client->accounts->sum('total_amount');
+                $totalPaid = $client->accounts->sum('amount_paid');
+                $remainingAmount = $totalAmount - $totalPaid;
+                return number_format($remainingAmount, 0, ',', '.') . ' G$';
+            })
             ->editColumn('status', function ($client) {
                 return $client->status ? 'Ativo' : 'Inativo';
             })
             ->addColumn('action', function ($client) {
-                return "
-                    <a class='m-2' href='" . route('clients.edit', $client->id) . "'><i class='fas fa-pen fa-2x'></i></a>
-                    <a class='m-2' href='" . route('clients.pay', $client->id) . "'><i class='fas fa-cash-register fa-2x'></i></a>
-                    <a class='m-2 linkDelete' href='#' data-href='" . route('clients.destroy', $client->id) . "' data-toggle='modal' data-target='#deleteModal'>
-                        <i class='fas fa-trash fa-2x'></i>
-                    </a>";
+                return "<a class='m-2' href='" . route('clients.edit', $client->id) . "'><i class='fas fa-pen fa-2x'></i></a>
+                <a class='m-2 linkDelete' href='#' data-href='" . route('clients.destroy', $client->id) . "' data-toggle='modal' data-target='#deleteModal'>
+                    <i class='fas fa-trash fa-2x'></i>
+                </a>
+                <a class='m-2' href='" . route('clients.pay', $client->id) . "'><i class='fas fa-money-bill-wave fa-2x'></i></a>";
             })
             ->rawColumns(['action'])
             ->toJson();
@@ -68,38 +75,60 @@ class ClientController extends Controller
         return redirect()->route('clients.index');
     }
 
-    public function showPaymentForm(Client $client)
+    public function pay($id)
     {
-        $accounts = $client->accounts()->where('status', '!=', 'paid')->orderBy('due_date')->get();
-        return view('clients.pay', compact('client', 'accounts'));
+        $client = Client::findOrFail($id);
+        $accounts = $client->accounts()->orderBy('due_date')->get();
+        $payments = $client->payments()->orderBy('payment_date', 'desc')->get();
+
+        // Calcular o valor total da conta
+        $totalAccountValue = $accounts->sum('total_amount');
+        $totalPaid = $accounts->sum('amount_paid');
+        $remainingAmount = $totalAccountValue - $totalPaid;
+
+        return view('clients.pay', compact('client', 'accounts', 'payments', 'totalAccountValue', 'totalPaid', 'remainingAmount'));
     }
 
-    public function processPayment(Request $request, Client $client)
+    public function processPayment(Request $request, $id)
     {
         $request->validate([
-            'amount' => 'required|numeric|min:1',
+            'amount' => 'required|numeric|min:0.01',
         ]);
 
+        $client = Client::findOrFail($id);
         $amount = $request->input('amount');
+        $affectedAccounts = [];
+
+        // Obter todas as contas do cliente, ordenadas por data de vencimento, excluindo as que estão totalmente pagas
         $accounts = $client->accounts()->where('status', '!=', 'paid')->orderBy('due_date')->get();
 
         foreach ($accounts as $account) {
-            if ($amount <= 0) break;
-
-            $remaining = $account->total_amount - $account->amount_paid;
-
-            if ($amount >= $remaining) {
-                $account->amount_paid = $account->total_amount;
-                $amount -= $remaining;
-            } else {
-                $account->amount_paid += $amount;
-                $amount = 0;
+            if ($amount <= 0) {
+                break;
             }
 
-            $account->updateStatus();
+            $remaining = $account->total_amount - $account->amount_paid;
+            if ($amount >= $remaining) {
+                $paymentAmount = $remaining;
+            } else {
+                $paymentAmount = $amount;
+            }
+
+            // Registrar o valor pago em cada conta afetada
+            $affectedAccounts[$account->id] = $paymentAmount;
+
+            $amount -= $paymentAmount;
         }
 
-        return redirect()->route('clients.index')->with('success', 'Pagamento efetuado com sucesso.');
+        // Criar o pagamento
+        Payment::create([
+            'client_id' => $client->id,
+            'affected_accounts' => $affectedAccounts, // Passar o array diretamente
+            'amount' => $request->input('amount'),
+            'payment_date' => now(),
+        ]);
+
+        return redirect()->route('clients.index')->with('success', 'Pagamento realizado com sucesso.');
     }
 
     public function destroy($id)

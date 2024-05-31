@@ -19,9 +19,9 @@ return new class extends Migration
             $table->date('due_date');
             $table->enum('status', ['pending', 'partially_paid', 'paid', 'overdue']);
             $table->timestamps();
+            $table->softDeletes();
 
             $table->foreign('client_id')->references('id')->on('clients');
-            $table->softDeletes();
         });
     }
 

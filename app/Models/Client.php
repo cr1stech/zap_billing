@@ -11,16 +11,17 @@ class Client extends Model
 
     protected $fillable = [
         'name',
-        'phone_number'
+        'phone_number',
+        'status'
     ];
-
-    public function purchases()
-    {
-        return $this->hasMany(Purchase::class);
-    }
 
     public function accounts()
     {
         return $this->hasMany(ClientAccount::class);
+    }
+
+    public function payments()
+    {
+        return $this->hasMany(Payment::class);
     }
 }

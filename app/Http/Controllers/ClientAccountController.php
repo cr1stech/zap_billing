@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Client;
 use App\Models\ClientAccount;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 
 class ClientAccountController extends Controller
@@ -20,6 +21,15 @@ class ClientAccountController extends Controller
             ->addIndexColumn()
             ->editColumn('client_id', function ($account) {
                 return $account->client ? $account->client->name : 'Sem cliente';
+            })
+            ->editColumn('total_amount', function ($account) {
+                return number_format($account->total_amount, 0, ',', '.') . ' G$';
+            })
+            ->editColumn('amount_paid', function ($account) {
+                return number_format($account->amount_paid, 0, ',', '.') . ' G$';
+            })
+            ->editColumn('due_date', function ($account) {
+                return Carbon::parse($account->due_date)->format('d/m/Y');
             })
             ->editColumn('status', function ($account) {
                 $statusLabels = [

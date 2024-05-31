@@ -50,7 +50,7 @@
                             </tr>
                             </thead>
                             <tbody>
-
+                            <!-- DataTables irá preencher o conteúdo aqui -->
                             </tbody>
                         </table>
                     </div>

@@ -27,8 +27,8 @@ Route::middleware('auth:web')->group(function () {
             Route::get('{id}', 'show')->name('show');
             Route::get('{id}/edit', 'edit')->name('edit');
             Route::put('{id}', 'update')->name('update');
-            Route::get('/{client}/pay', 'showPaymentForm')->name('pay');
-            Route::post('/{client}/pay', 'processPayment')->name('processPayment');
+            Route::get('{id}/pay', 'pay')->name('pay');
+            Route::post('{id}/pay', 'processPayment')->name('processPayment');
             Route::delete('{id}', 'destroy')->name('destroy');
         });
 
