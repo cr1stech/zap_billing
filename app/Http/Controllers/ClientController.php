@@ -4,10 +4,19 @@ namespace App\Http\Controllers;
 
 use App\Models\Client;
 use App\Models\Payment;
+use App\Services\TwilioService;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 
 class ClientController extends Controller
 {
+    protected $twilio;
+
+    public function __construct(TwilioService $twilio)
+    {
+        $this->twilio = $twilio;
+    }
+
     public function index()
     {
         return view('clients.index');
@@ -29,14 +38,75 @@ class ClientController extends Controller
                 return $client->status ? 'Ativo' : 'Inativo';
             })
             ->addColumn('action', function ($client) {
-                return "<a class='m-2' href='" . route('clients.edit', $client->id) . "'><i class='fas fa-pen fa-2x'></i></a>
-                <a class='m-2 linkDelete' href='#' data-href='" . route('clients.destroy', $client->id) . "' data-toggle='modal' data-target='#deleteModal'>
-                    <i class='fas fa-trash fa-2x'></i>
-                </a>
-                <a class='m-2' href='" . route('clients.pay', $client->id) . "'><i class='fas fa-money-bill-wave fa-2x'></i></a>";
+                return "
+                    <a class='m-2' href='" . route('clients.edit', $client->id) . "'><i class='fas fa-pen fa-2x'></i></a>
+                    <a class='m-2 linkDelete' href='#' data-href='" . route('clients.destroy', $client->id) . "' data-toggle='modal' data-target='#deleteModal'>
+                        <i class='fas fa-trash fa-2x'></i>
+                    </a>
+                    <a class='m-2' href='" . route('clients.pay', $client->id) . "'><i class='fas fa-money-bill-wave fa-2x'></i></a>
+                    <a class='m-2 btn-send-sms' href='#' data-client-id='{$client->id}'><i class='fab fa-whatsapp fa-2x'></i></a>
+                ";
             })
             ->rawColumns(['action'])
             ->toJson();
+    }
+
+    public function formatPhoneNumber($phoneNumber)
+    {
+        // Remove todos os caracteres não numéricos
+        $phoneNumber = preg_replace('/\D/', '', $phoneNumber);
+
+        // Remove o zero inicial, se existir
+        if (substr($phoneNumber, 0, 1) === '0') {
+            $phoneNumber = substr($phoneNumber, 1);
+        }
+
+        // Adiciona o código do país +595
+        $phoneNumber = '+595' . $phoneNumber;
+
+        return $phoneNumber;
+    }
+
+    public function sendSMS(Request $request)
+    {
+        $client = Client::find($request->client_id);
+
+        if ($client) {
+            $formattedPhoneNumber = $this->formatPhoneNumber($client->phone_number);
+
+            // Obter contas vencidas
+            $overdueAccounts = $client->accounts()->where('status', 'overdue')->get()->map(function ($account) {
+                $account->due_date = Carbon::parse($account->due_date);
+                return $account;
+            });
+
+            // Calcular totais para contas vencidas
+            $totalOverdueAmount = $overdueAccounts->sum('total_amount');
+            $totalOverduePaid = $overdueAccounts->sum('amount_paid');
+            $totalOverdueRemaining = $totalOverdueAmount - $totalOverduePaid;
+
+            // Dados para preencher o template
+            $data = [
+                'clientName' => $client->name,
+                'totalAmount' => number_format($totalOverdueAmount, 0, ',', '.') . ' G$',
+                'amountPaid' => number_format($totalOverduePaid, 0, ',', '.') . ' G$',
+                'remainingAmount' => number_format($totalOverdueRemaining, 0, ',', '.') . ' G$',
+                'overdueAccounts' => $overdueAccounts
+            ];
+
+            // Renderiza o template
+            $message = view('messages.payment_reminder', $data)->render();
+
+            try {
+                $this->twilio->sendMessage($formattedPhoneNumber, $message);
+                return response()->json(['success' => true]);
+            } catch (\Exception $e) {
+                \Log::error('Error sending WhatsApp message: ' . $e->getMessage());
+                return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
+            }
+        }
+
+        return response()->json(['success' => false], 404);
     }
 
     public function create()

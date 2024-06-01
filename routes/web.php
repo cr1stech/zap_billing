@@ -21,6 +21,7 @@ Route::middleware('auth:web')->group(function () {
         ->name('clients.')
         ->group(function () {
             Route::get('datatables', 'datatables')->name('datatables');
+            Route::post('/enviar-mensagem', 'sendSMS')->name('sendSMS');
             Route::get('/', 'index')->name('index');
             Route::get('create', 'create')->name('create');
             Route::post('/', 'store')->name('store');

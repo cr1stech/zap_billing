@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="{{ asset('vendor/select2/css/select2.css') }}" />
     <link rel="stylesheet" href="{{ asset('vendor/select2-bootstrap-theme/select2-bootstrap.min.css') }}" />
     <link rel="stylesheet" href="{{ asset('vendor/datatables/media/css/dataTables.bootstrap5.css') }}" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 @endsection
 
 @section('content')
@@ -48,7 +49,7 @@
                             </tr>
                             </thead>
                             <tbody>
-
+                            <!-- DataTables irá preencher o conteúdo aqui -->
                             </tbody>
                         </table>
                     </div>
@@ -85,6 +86,25 @@
                                 type: 'inline'
                             },
                             modal: true
+                        });
+                    });
+
+                    // Adiciona evento ao botão de enviar SMS
+                    $('#dataTable').on('click', '.btn-send-sms', function () {
+                        let clientId = $(this).data('client-id');
+                        $.ajax({
+                            url: "{{ route('clients.sendSMS') }}",
+                            method: "POST",
+                            data: {
+                                _token: "{{ csrf_token() }}",
+                                client_id: clientId
+                            },
+                            success: function (response) {
+                                alert('Mensagem enviada com sucesso!');
+                            },
+                            error: function (response) {
+                                alert('Falha ao enviar a mensagem.');
+                            }
                         });
                     });
                 },
