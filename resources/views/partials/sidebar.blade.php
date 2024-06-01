@@ -29,14 +29,14 @@
 
                     <li class="{{ request()->routeIs('clients.index') ? 'nav-active' : '' }}">
                         <a class="nav-link" href="{{ route('clients.index') }}">
-                            <i class="bx bx-home-alt" aria-hidden="true"></i>
+                            <i class="bx bx-user" aria-hidden="true"></i>
                             <span>Clientes</span>
                         </a>
                     </li>
 
                     <li class="{{ request()->routeIs('client-accounts.index') ? 'nav-active' : '' }}">
                         <a class="nav-link" href="{{ route('client-accounts.index') }}">
-                            <i class="bx bx-home-alt" aria-hidden="true"></i>
+                            <i class="bx bx-file" aria-hidden="true"></i>
                             <span>Contas</span>
                         </a>
                     </li>

@@ -47,6 +47,8 @@ Route::middleware('auth:web')->group(function () {
             Route::delete('{id}', 'destroy')->name('destroy');
         });
 
+    // Rota de logout verificada por middleware WEB
+    Route::get('/logout', [AuthController::class, 'logout'])->name('logout');
 });
 
 Route::fallback(function () {

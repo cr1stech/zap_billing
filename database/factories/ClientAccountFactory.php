@@ -20,9 +20,9 @@ class ClientAccountFactory extends Factory
         return [
             'client_id' => Client::factory(),
             'total_amount' => $totalAmount,
-            'amount_paid' => $amountPaid,
+            'amount_paid' => 0,
             'due_date' => Carbon::parse($this->faker->dateTimeBetween('-1 years', '+1 years')),
-            'status' => $status,
+//            'status' => $status,
         ];
     }
 

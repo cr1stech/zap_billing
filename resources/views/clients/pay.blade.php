@@ -80,7 +80,7 @@
         <div class="col-lg-6">
             <section class="card">
                 <div class="card-body">
-                    <h3 class="mt-4">Contas do Cliente</h3>
+                    <h3 class="my-4">Contas do Cliente</h3>
                     <table class="table table-bordered table-striped mb-0">
                         <thead>
                         <tr>
@@ -125,7 +125,7 @@
         <div class="col-lg-6">
             <section class="card">
                 <div class="card-body">
-                    <h3 class="mt-4">Últimos Pagamentos</h3>
+                    <h3 class="my-4">Últimos Pagamentos</h3>
                     <table class="table table-bordered table-striped mb-0">
                         <thead>
                         <tr>
