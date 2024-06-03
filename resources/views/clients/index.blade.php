@@ -6,9 +6,9 @@
 
 @section('styles')
     <!-- Vendor CSS -->
-    <link rel="stylesheet" href="{{ asset('vendor/select2/css/select2.css') }}" />
-    <link rel="stylesheet" href="{{ asset('vendor/select2-bootstrap-theme/select2-bootstrap.min.css') }}" />
-    <link rel="stylesheet" href="{{ asset('vendor/datatables/media/css/dataTables.bootstrap5.css') }}" />
+    <link rel="stylesheet" href="{{ asset('vendor/select2/css/select2.css') }}"/>
+    <link rel="stylesheet" href="{{ asset('vendor/select2-bootstrap-theme/select2-bootstrap.min.css') }}"/>
+    <link rel="stylesheet" href="{{ asset('vendor/datatables/media/css/dataTables.bootstrap5.css') }}"/>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 @endsection
 
@@ -41,11 +41,12 @@
                         <table class="table table-bordered table-striped mb-0" id="dataTable">
                             <thead>
                             <tr>
-                                <th>ID</th>
+                                <th width="5%">ID</th>
                                 <th>Nome</th>
-                                <th>Telefone</th>
-                                <th>Conta Total</th>
-                                <th>Ações</th>
+                                <th width="20%">Telefone</th>
+                                <th width="15%">Conta Total</th>
+                                <th width="10%">Status</th>
+                                <th width="15%">Ações</th>
                             </tr>
                             </thead>
                             <tbody>
@@ -71,6 +72,7 @@
                     {data: 'name', name: 'name'},
                     {data: 'phone_number', name: 'phone_number'},
                     {data: 'total_account_value', name: 'total_account_value'},
+                    {data: 'status', name: 'status'},
                     {data: 'action', name: 'action', orderable: false, searchable: false},
                 ],
                 language: {

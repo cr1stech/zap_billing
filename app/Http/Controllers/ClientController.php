@@ -2,11 +2,16 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreClientRequest;
+use App\Http\Requests\UpdateClientRequest;
 use App\Models\Client;
 use App\Models\Payment;
 use App\Services\TwilioService;
 use Carbon\Carbon;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\View\View;
 
 class ClientController extends Controller
 {
@@ -17,12 +22,12 @@ class ClientController extends Controller
         $this->twilio = $twilio;
     }
 
-    public function index()
+    public function index(): View
     {
         return view('clients.index');
     }
 
-    public function datatables()
+    public function datatables(): JsonResponse
     {
         $clients = Client::with('accounts')->get();
 
@@ -35,7 +40,7 @@ class ClientController extends Controller
                 return number_format($remainingAmount, 0, ',', '.') . ' G$';
             })
             ->editColumn('status', function ($client) {
-                return $client->status ? 'Ativo' : 'Inativo';
+                return $client->status === 'active' ? 'Ativo' : 'Inativo';
             })
             ->addColumn('action', function ($client) {
                 return "
@@ -51,7 +56,7 @@ class ClientController extends Controller
             ->toJson();
     }
 
-    public function formatPhoneNumber($phoneNumber)
+    public function formatPhoneNumber($phoneNumber): string
     {
         // Remove todos os caracteres não numéricos
         $phoneNumber = preg_replace('/\D/', '', $phoneNumber);
@@ -67,9 +72,9 @@ class ClientController extends Controller
         return $phoneNumber;
     }
 
-    public function sendSMS(Request $request)
+    public function sendSMS(Request $request): JsonResponse
     {
-        $client = Client::find($request->client_id);
+        $client = Client::query()->find($request->client_id);
 
         if ($client) {
             $formattedPhoneNumber = $this->formatPhoneNumber($client->phone_number);
@@ -109,45 +114,40 @@ class ClientController extends Controller
         return response()->json(['success' => false], 404);
     }
 
-    public function create()
+    public function create(): View
     {
         return view('clients.create');
     }
 
-    public function store(Request $request)
+    public function store(StoreClientRequest $request): RedirectResponse
     {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:clients,email',
-            'status' => 'required|boolean'
-        ]);
+        $data = $request->validated();
 
-        Client::create($request->all());
-        return redirect()->route('clients.index');
+        Client::query()->create($data);
+
+        return redirect()->route('clients.index')->with('success', 'Cliente criado com sucesso!');
     }
 
-    public function edit($id)
+    public function edit($id): View
     {
-        $client = Client::findOrFail($id);
+        $client = Client::query()->findOrFail($id);
         return view('clients.edit', compact('client'));
     }
 
-    public function update(Request $request, $id)
+    public function update(UpdateClientRequest $request, $id): RedirectResponse
     {
-        $request->validate([
-            'name' => 'sometimes|required|string|max:255',
-            'email' => 'sometimes|required|email|unique:clients,email,' . $id,
-            'status' => 'sometimes|required|boolean'
-        ]);
+        $data = $request->validated();
 
-        $client = Client::findOrFail($id);
-        $client->update($request->all());
-        return redirect()->route('clients.index');
+        $client = Client::query()->findOrFail($id);
+        $client->update($data);
+
+        return redirect()->route('clients.index')->with('success', 'Cliente atualizado com sucesso!');
     }
 
-    public function pay($id)
+    public function pay($id): View
     {
-        $client = Client::findOrFail($id);
+        $client = Client::query()->findOrFail($id);
+
         $accounts = $client->accounts()->orderBy('due_date')->get();
         $payments = $client->payments()->orderBy('payment_date', 'desc')->get();
 
@@ -159,13 +159,13 @@ class ClientController extends Controller
         return view('clients.pay', compact('client', 'accounts', 'payments', 'totalAccountValue', 'totalPaid', 'remainingAmount'));
     }
 
-    public function processPayment(Request $request, $id)
+    public function processPayment(Request $request, $id): RedirectResponse
     {
         $request->validate([
             'amount' => 'required|numeric|min:0.01',
         ]);
 
-        $client = Client::findOrFail($id);
+        $client = Client::query()->findOrFail($id);
         $amount = $request->input('amount');
         $affectedAccounts = [];
 
@@ -191,7 +191,7 @@ class ClientController extends Controller
         }
 
         // Criar o pagamento
-        Payment::create([
+        Payment::query()->create([
             'client_id' => $client->id,
             'affected_accounts' => $affectedAccounts, // Passar o array diretamente
             'amount' => $request->input('amount'),
@@ -201,9 +201,9 @@ class ClientController extends Controller
         return redirect()->route('clients.index')->with('success', 'Pagamento realizado com sucesso.');
     }
 
-    public function destroy($id)
+    public function destroy($id): RedirectResponse
     {
-        $client = Client::findOrFail($id);
+        $client = Client::query()->findOrFail($id);
         $client->delete();
         return redirect()->route('clients.index');
     }
