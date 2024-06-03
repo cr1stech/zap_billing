@@ -4,12 +4,6 @@
     Editar Cliente
 @endsection
 
-@section('styles')
-    <!-- Vendor CSS -->
-    <link rel="stylesheet" href="{{ asset('vendor/select2/css/select2.css') }}" />
-    <link rel="stylesheet" href="{{ asset('vendor/select2-bootstrap-theme/select2-bootstrap.min.css') }}" />
-@endsection
-
 @section('content')
     <!-- start: page -->
     <section class="card card-featured card-dark card-featured-primary mb-4">
@@ -40,8 +34,4 @@
         </div>
     </section>
     <!-- end: page -->
-@endsection
-
-@section('scripts')
-    <script src="{{ asset('vendor/select2/js/select2.js') }}"></script>
 @endsection

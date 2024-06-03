@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreClientAccountRequest;
+use App\Http\Requests\UpdateClientAccountRequest;
 use App\Models\Client;
 use App\Models\ClientAccount;
 use Carbon\Carbon;
@@ -16,7 +18,7 @@ class ClientAccountController extends Controller
 
     public function datatables()
     {
-        $accounts = ClientAccount::with(['client'])->get();
+        $accounts = ClientAccount::query()->with(['client'])->get();
         return datatables()->of($accounts)
             ->addIndexColumn()
             ->editColumn('client_id', function ($account) {
@@ -52,48 +54,58 @@ class ClientAccountController extends Controller
 
     public function create()
     {
-        $clients = Client::all();
+        $clients = Client::query()->get();
         return view('client_accounts.create', compact('clients'));
     }
 
-    public function store(Request $request)
+    public function store(StoreClientAccountRequest $request)
     {
-        $request->validate([
-            'client_id' => 'required|exists:clients,id',
-            'total_amount' => 'required|numeric',
-            'due_date' => 'required|date',
-            'status' => 'required|in:pending,partially_paid,paid,overdue'
-        ]);
+        $data = $request->validated();
 
-        $account = ClientAccount::create($request->all());
+        // Convertendo a data para o formato do banco de dados
+        $data['due_date'] = Carbon::createFromFormat('d/m/Y', $data['due_date'])->format('Y-m-d');
+
+        // Definindo amount_paid como 0 se estiver vazio
+        if (empty($data['amount_paid'])) {
+            $data['amount_paid'] = 0;
+        }
+
+        $account = ClientAccount::query()->create($data);
         $account->updateStatus();
-        return redirect()->route('client-accounts.index');
+
+        return redirect()->route('client-accounts.index')->with('success', 'Conta criada com sucesso!');
     }
 
     public function edit($id)
     {
-        $account = ClientAccount::findOrFail($id);
+        $clientAccount = ClientAccount::query()->findOrFail($id);
+        $clientAccount->due_date = Carbon::parse($clientAccount->due_date)->format('d/m/Y'); // Convertendo para o formato desejado
         $clients = Client::all();
-        return view('client_accounts.edit', compact('account', 'clients'));
+        return view('client_accounts.edit', compact('clientAccount', 'clients'));
     }
 
-    public function update(Request $request, $id)
+    public function update(UpdateClientAccountRequest $request, $id)
     {
-        $request->validate([
-            'total_amount' => 'sometimes|required|numeric',
-            'due_date' => 'sometimes|required|date',
-            'status' => 'sometimes|required|in:pending,partially_paid,paid,overdue'
-        ]);
+        $data = $request->validated();
 
-        $account = ClientAccount::findOrFail($id);
-        $account->update($request->all());
-        $account->updateStatus();
-        return redirect()->route('client-accounts.index');
+        // Convertendo a data para o formato do banco de dados
+        $data['due_date'] = Carbon::createFromFormat('d/m/Y', $data['due_date'])->format('Y-m-d');
+
+        // Definindo amount_paid como 0 se estiver vazio
+        if (empty($data['amount_paid'])) {
+            $data['amount_paid'] = 0;
+        }
+
+        $clientAccount = ClientAccount::query()->findOrFail($id);
+        $clientAccount->update($data);
+        $clientAccount->updateStatus();
+
+        return redirect()->route('client-accounts.index')->with('success', 'Conta atualizada com sucesso!');
     }
 
     public function destroy($id)
     {
-        $account = ClientAccount::findOrFail($id);
+        $account = ClientAccount::query()->findOrFail($id);
         $account->delete();
         return redirect()->route('client-accounts.index');
     }

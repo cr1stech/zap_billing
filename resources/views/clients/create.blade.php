@@ -5,7 +5,6 @@
 @endsection
 
 @section('styles')
-    <!-- Vendor CSS -->
     <link rel="stylesheet" href="{{ asset('vendor/select2/css/select2.css') }}" />
     <link rel="stylesheet" href="{{ asset('vendor/select2-bootstrap-theme/select2-bootstrap.min.css') }}" />
 @endsection
