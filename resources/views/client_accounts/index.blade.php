@@ -40,13 +40,13 @@
                         <table class="table table-bordered table-striped mb-0" id="dataTable">
                             <thead>
                             <tr>
-                                <th>ID</th>
+                                <th width="5%">ID</th>
                                 <th>Cliente</th>
-                                <th>Valor Total</th>
-                                <th>Valor Pago</th>
-                                <th>Data de Vencimento</th>
-                                <th>Status</th>
-                                <th>Ações</th>
+                                <th width="15%">Valor Total</th>
+                                <th width="15%">Valor Pago</th>
+                                <th width="20%">Data de Vencimento</th>
+                                <th width="10%">Status</th>
+                                <th width="10%">Ações</th>
                             </tr>
                             </thead>
                             <tbody>
